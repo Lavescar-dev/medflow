@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Activity, X } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import type { DemoSession } from '../demoAccess';
 import { MODULE_CATEGORIES, getCategoryByModule } from '../moduleRegistry';
 
 interface SidebarProps {
@@ -8,9 +9,10 @@ interface SidebarProps {
   setIsOpen: (open: boolean) => void;
   activeModule: string;
   setActiveModule: (module: string) => void;
+  sessionUser: DemoSession | null;
 }
 
-export function Sidebar({ isOpen, setIsOpen, activeModule, setActiveModule }: SidebarProps) {
+export function Sidebar({ isOpen, setIsOpen, activeModule, setActiveModule, sessionUser }: SidebarProps) {
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>(
     () =>
       Object.fromEntries(
@@ -56,9 +58,9 @@ export function Sidebar({ isOpen, setIsOpen, activeModule, setActiveModule }: Si
                 <Activity size={20} className="stroke-[2.5]" />
               </div>
               <div>
-                <h1 className="leading-tight font-bold text-lg text-slate-800">MedCore Plus</h1>
+                <h1 className="leading-tight font-bold text-lg text-slate-800">MedFlow</h1>
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                  Kurumsal HBYS
+                  Clinic Workspace
                 </p>
               </div>
             </div>
@@ -149,11 +151,13 @@ export function Sidebar({ isOpen, setIsOpen, activeModule, setActiveModule }: Si
         <div className="border-t border-slate-100 bg-slate-50/50 p-4">
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
             <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-blue-100 font-bold text-blue-700 shadow-sm">
-              MD
+              {(sessionUser?.name?.slice(0, 2) ?? 'MD').toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-slate-800">Dr. Mehmet Yılmaz</p>
-              <p className="truncate text-xs text-slate-500">Başhekim / Yönetici</p>
+              <p className="truncate text-sm font-semibold text-slate-800">{sessionUser?.name ?? 'Dr. Mehmet Yılmaz'}</p>
+              <p className="truncate text-xs text-slate-500">
+                {sessionUser ? `${sessionUser.role} / Demo oturumu` : 'Başhekim / Yönetici'}
+              </p>
             </div>
           </div>
         </div>

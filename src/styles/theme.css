@@ -179,3 +179,74 @@
     line-height: 1.5;
   }
 }
+
+@keyframes medflow-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes medflow-hero-pan {
+  from {
+    transform: scale(1.04);
+  }
+
+  to {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes medflow-signal-dot {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+}
+
+.medflow-fade-up {
+  animation: medflow-fade-up 720ms ease-out both;
+}
+
+.medflow-delay-1 {
+  animation-delay: 120ms;
+}
+
+.medflow-delay-2 {
+  animation-delay: 220ms;
+}
+
+.medflow-delay-3 {
+  animation-delay: 320ms;
+}
+
+.medflow-delay-4 {
+  animation-delay: 420ms;
+}
+
+.medflow-hero-pan {
+  animation: medflow-hero-pan 18s ease-out both;
+}
+
+.medflow-signal-dot {
+  animation: medflow-signal-dot 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .medflow-fade-up,
+  .medflow-hero-pan,
+  .medflow-signal-dot {
+    animation: none !important;
+  }
+}

@@ -1,9 +1,19 @@
 import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { DemoAccess } from './components/DemoAccess';
 import { Header } from './components/Header';
+import { MedFlowLanding } from './components/MedFlowLanding';
 import { Sidebar } from './components/Sidebar';
 import {
+  DEMO_ACCESS_ROUTE,
+  clearDemoSession,
+  createDemoSession,
+  readDemoSession,
+  writeDemoSession,
+} from './demoAccess';
+import {
   DEFAULT_MODULE,
+  getCategoryByModule,
   getModuleByPath,
   getModuleByName,
   getModulePath,
@@ -114,11 +124,50 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const normalizedPath = useMemo(
+    () => location.pathname.replace(/\/+$/, '') || '/',
+    [location.pathname],
+  );
+  const isLandingRoute = normalizedPath === '/';
+  const isDemoAccessRoute = normalizedPath === DEMO_ACCESS_ROUTE;
   const routeModule = useMemo(() => getModuleByPath(location.pathname), [location.pathname]);
   const activeModule = routeModule?.name ?? DEFAULT_MODULE;
+  const [demoSession, setDemoSession] = useState(() => readDemoSession());
   const [recentModules, setRecentModules] = useState<string[]>(() =>
     [DEFAULT_MODULE, ...readRecentModules()].filter((item, index, arr) => arr.indexOf(item) === index).slice(0, 6),
   );
+
+  const requestedModulePath = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const next = params.get('next');
+
+    if (!next || next === '/' || next === DEMO_ACCESS_ROUTE) {
+      return getModulePath(DEFAULT_MODULE);
+    }
+
+    return getModuleByPath(next) ? next : getModulePath(DEFAULT_MODULE);
+  }, [location.search]);
+
+  const requestedModuleName = useMemo(
+    () => getModuleByPath(requestedModulePath)?.name ?? DEFAULT_MODULE,
+    [requestedModulePath],
+  );
+  const requestedModuleContextLabel = useMemo(() => {
+    const requestedModule = getModuleByPath(requestedModulePath) ?? getModuleByName(DEFAULT_MODULE);
+    if (!requestedModule) {
+      return 'HBYS giriş alanı';
+    }
+
+    const category = getCategoryByModule(requestedModule.name)?.category;
+    return category
+      ? `${category} akışı / ${requestedModule.description}`
+      : requestedModule.description;
+  }, [requestedModulePath]);
+
+  const buildAccessRoute = useCallback((moduleName: string) => {
+    const nextPath = getModulePath(moduleName);
+    return `${DEMO_ACCESS_ROUTE}?next=${encodeURIComponent(nextPath)}`;
+  }, []);
 
   const handleSelectModule = useCallback((moduleName: string) => {
     if (getModuleByName(moduleName)) {
@@ -126,19 +175,72 @@ export default function App() {
     }
   }, [navigate]);
 
+  const handleOpenAccess = useCallback((moduleName: string) => {
+    if (!getModuleByName(moduleName)) {
+      return;
+    }
+
+    navigate(buildAccessRoute(moduleName));
+  }, [buildAccessRoute, navigate]);
+
+  const handleGrantDemoAccess = useCallback((draft: Parameters<typeof createDemoSession>[0]) => {
+    const nextSession = createDemoSession(draft);
+    writeDemoSession(nextSession);
+    setDemoSession(nextSession);
+    navigate(requestedModulePath, { replace: true });
+  }, [navigate, requestedModulePath]);
+
+  const handleContinueDemo = useCallback(() => {
+    const currentSession = readDemoSession();
+    setDemoSession(currentSession);
+    navigate(requestedModulePath, { replace: true });
+  }, [navigate, requestedModulePath]);
+
+  const handleResetDemoSession = useCallback(() => {
+    clearDemoSession();
+    setDemoSession(null);
+  }, []);
+
   useEffect(() => {
+    if (isLandingRoute || isDemoAccessRoute) {
+      return;
+    }
+
+    if (!demoSession) {
+      navigate(`${DEMO_ACCESS_ROUTE}?next=${encodeURIComponent(normalizedPath)}`, { replace: true });
+      return;
+    }
+
     if (!routeModule) {
       navigate(getModulePath(DEFAULT_MODULE), { replace: true });
     }
-  }, [navigate, routeModule]);
+  }, [demoSession, isDemoAccessRoute, isLandingRoute, navigate, normalizedPath, routeModule]);
 
   useEffect(() => {
+    if (isLandingRoute || isDemoAccessRoute) {
+      return;
+    }
+
     setRecentModules((previous) => {
       const next = [activeModule, ...previous.filter((item) => item !== activeModule)].slice(0, 6);
       window.localStorage.setItem(RECENT_MODULES_KEY, JSON.stringify(next));
       return next;
     });
-  }, [activeModule]);
+  }, [activeModule, isDemoAccessRoute, isLandingRoute]);
+
+  useEffect(() => {
+    if (isLandingRoute) {
+      document.title = 'MedFlow HBYS';
+      return;
+    }
+
+    if (isDemoAccessRoute) {
+      document.title = 'MedFlow Çalışma Alanı';
+      return;
+    }
+
+    document.title = `MedFlow - ${activeModule}`;
+  }, [activeModule, isDemoAccessRoute, isLandingRoute]);
 
   const ActiveModuleComponent = useMemo(() => MODULE_COMPONENTS[activeModule], [activeModule]);
 
@@ -147,6 +249,24 @@ export default function App() {
       ? { onNavigateToModule: handleSelectModule }
       : {};
 
+  if (isLandingRoute) {
+    return <MedFlowLanding onOpenAccess={handleOpenAccess} />;
+  }
+
+  if (isDemoAccessRoute) {
+    return (
+      <DemoAccess
+        targetModuleName={requestedModuleName}
+        targetContextLabel={requestedModuleContextLabel}
+        activeSession={demoSession}
+        onBack={() => navigate('/')}
+        onContinueActiveSession={handleContinueDemo}
+        onResetSession={handleResetDemoSession}
+        onAccessGranted={handleGrantDemoAccess}
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-50 font-sans text-slate-900">
       <Sidebar
@@ -154,6 +274,7 @@ export default function App() {
         setIsOpen={setSidebarOpen}
         activeModule={activeModule}
         setActiveModule={handleSelectModule}
+        sessionUser={demoSession}
       />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header

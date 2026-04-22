@@ -1,7 +1,7 @@
 
-# MedFlow
+# MedFlow Clinic Workspace
 
-This directory contains the MedFlow hospital management demo app.
+This directory contains the MedFlow Clinic Workspace demo app.
 
 ## Running the code
 
@@ -11,7 +11,7 @@ Run `npm run dev` to start the development server.
 
 ## Routing and static hosting
 
-MedFlow now uses browser paths such as:
+MedFlow Clinic Workspace now uses browser paths such as:
 
 - `/dashboard`
 - `/appointments`

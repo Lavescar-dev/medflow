@@ -42,7 +42,7 @@ interface QueueItem {
   name: string;
   time: string;
   wait: number; // dakika
-  status: 'Sırada' | 'Gecikti' | 'Çağrıldı' | 'Muayenede' | 'Kayıtta';
+  status: 'Sırada' | 'Gecikti' | 'Çağrıldı' | 'Muayenede' | 'Kayıtta' | 'Geldi';
 }
 
 function createPatientContextFromAppointment(appointment: Appointment): SharedPatient | null {
@@ -941,6 +941,7 @@ export function AppointmentManagement() {
                           "text-[10px] font-bold px-2 py-0.5 rounded-full",
                           q.status === 'Gecikti' ? 'bg-red-100 text-red-700' :
                             q.status === 'Sırada' ? 'bg-amber-100 text-amber-700' :
+                              q.status === 'Geldi' ? 'bg-teal-100 text-teal-700' :
                               q.status === 'Çağrıldı' ? 'bg-purple-100 text-purple-700' :
                                 q.status === 'Muayenede' ? 'bg-purple-100 text-purple-700' :
                                   'bg-blue-100 text-blue-700'

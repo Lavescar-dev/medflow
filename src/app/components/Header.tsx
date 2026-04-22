@@ -157,7 +157,7 @@ export function Header({ toggleSidebar, activeModule, onSelectModule, recentModu
           </button>
 
           <div className="hidden items-center text-sm font-medium text-slate-500 sm:flex">
-            <span>MedCore Plus</span>
+            <span>MedFlow</span>
             <span className="mx-2 text-slate-300">/</span>
             <span className="font-semibold text-slate-800">{activeModule}</span>
           </div>
